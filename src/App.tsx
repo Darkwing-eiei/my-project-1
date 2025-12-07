@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Receipt, BarChart3, Home, Plus, Minus, Trash2, TrendingUp, DollarSign, Package, Users, Settings, Edit, Save, X } from 'lucide-react';
 
-// กำหนดประเภทข้อมูล (Interfaces) สำหรับข้อมูลต่างๆ ในแอปพลิเคชัน
+// ====================================================================
+// ส่วนที่ 1: การกำหนดประเภทข้อมูล (Interfaces)
+// ====================================================================
+
 interface MenuItem {
   id: number;
   name: string;
@@ -27,23 +30,328 @@ interface ShopSettings {
   promptPayName: string;
 }
 
+// ====================================================================
+// 📌 ส่วนที่ 2: ฟังก์ชันสำหรับ PromptPay QR Code (CRC Calculation)
+//    - วางไว้นอกคอมโพเนนต์หลัก เพื่อให้เรียกใช้งานได้ง่าย
+// ====================================================================
+
+// ฟังก์ชันสำหรับคำนวณ CRC16-CCITT Checksum (XMODEM)
+const crc16ccitt = (data: string): string => {
+  let crc = 0xffff;
+  const polynomial = 0x1021;
+  const bytes = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    bytes[i] = data.charCodeAt(i);
+  }
+
+  for (let i = 0; i < bytes.length; i++) {
+    crc ^= bytes[i] << 8;
+    for (let j = 0; j < 8; j++) {
+      if (crc & 0x8000) {
+        crc = (crc << 1) ^ polynomial;
+      } else {
+        crc <<= 1;
+      }
+    }
+  }
+  return (crc & 0xffff).toString(16).toUpperCase().padStart(4, '0');
+};
+
+
+// ฟังก์ชันหลักสำหรับสร้าง URL ของ QR Code PromptPay
+const generatePromptPayQR = (amount: number, settings: ShopSettings): string => {
+    // 1. เตรียมข้อมูลพื้นฐาน
+    const promptPayId = settings.promptPayId.replace(/[^0-9]/g, ''); // ลบอักขระที่ไม่ใช่ตัวเลข
+    const paddedPromptPayId = promptPayId.padStart(13, '0');
+    
+    // กำหนดว่า QR จะระบุยอดเงินหรือไม่ (ถ้าจำนวนเงินเป็น 0 ให้เป็น QR แบบให้กรอกยอดเอง)
+    const amountFloat = parseFloat(amount.toFixed(2));
+    const hasAmount = amountFloat > 0;
+    const amountStr = hasAmount ? amountFloat.toFixed(2) : '';
+
+    // 2. สร้างโครงสร้างข้อมูล TLV (Tag-Length-Value)
+    
+    // Tag 00: Payload Format Indicator (Fixed)
+    const tlv00 = '000201'; 
+    
+    // Tag 01: Point of Initiation (11=Static without amount, 12=Static with amount)
+    const tlv01 = `0102${hasAmount ? '12' : '11'}`; 
+    
+    // Tag 29: Merchant Account Information
+    // 00=A000000677010111 (PromptPay)
+    // 01=PromptPay ID (13 หลัก)
+    const tlv29_00 = '0016A000000677010111';
+    const tlv29_01_Value = paddedPromptPayId;
+    const tlv29_01 = `01${tlv29_01_Value.length.toString().padStart(2, '0')}${tlv29_01_Value}`;
+    const tlv29_Value = `${tlv29_00}${tlv29_01}`;
+    const tlv29 = `29${tlv29_Value.length.toString().padStart(2, '0')}${tlv29_Value}`;
+    
+    // Tag 53: Currency Code (764 = THB)
+    const tlv53 = '5303764'; 
+    
+    // Tag 54: Transaction Amount
+    let tlv54 = '';
+    if (hasAmount) {
+        tlv54 = `54${amountStr.length.toString().padStart(2, '0')}${amountStr}`;
+    }
+    
+    // Tag 58: Country Code (TH)
+    const tlv58 = '5802TH'; 
+
+    // Tag 63: CRC (เหลือ 4 หลักสุดท้าย)
+    const tlv63_prefix = '6304'; 
+
+    // 3. รวมสตริงทั้งหมดก่อน CRC
+    const dataForCrc = `${tlv00}${tlv01}${tlv29}${tlv53}${tlv54}${tlv58}${tlv63_prefix}`;
+
+    // 4. คำนวณ CRC และสร้าง Checksum ตัวจริง
+    const crcValue = crc16ccitt(dataForCrc);
+    
+    // 5. สร้าง Data String สมบูรณ์
+    const finalDataString = `${dataForCrc}${crcValue}`;
+    
+    // 6. สร้าง URL QR Code
+    // console.log("Final Data String:", finalDataString); // ใช้สำหรับ Debug
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(finalDataString)}`;
+};
+
+
+// ====================================================================
+// ส่วนที่ 3: คอมโพเนนต์ย่อย (ถูกปรับปรุงเล็กน้อย)
+// ====================================================================
+
+interface ShopSettingsFormProps {
+  initialSettings: ShopSettings;
+  onSave: (settings: ShopSettings) => void;
+  onCancel: () => void;
+}
+
+const ShopSettingsForm = ({ initialSettings, onSave, onCancel }: ShopSettingsFormProps) => {
+  const [currentSettings, setCurrentSettings] = useState<ShopSettings>(initialSettings);
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+      <h2 className="text-lg font-semibold mb-4">ตั้งค่าข้อมูลร้าน & PromptPay</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="col-span-1 md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อร้าน</label>
+          <input
+            type="text"
+            value={currentSettings.shopName}
+            onChange={(e) => setCurrentSettings({ ...currentSettings, shopName: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            placeholder="ระบุชื่อร้าน"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            เลขที่ PromptPay (เบอร์โทร หรือ เลขประจำตัว)
+          </label>
+          <input
+            type="text"
+            value={currentSettings.promptPayId}
+            onChange={(e) => setCurrentSettings({ ...currentSettings, promptPayId: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            placeholder="เช่น 0812345678 หรือ 1234567890123"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อเจ้าของบัญชี</label>
+          <input
+            type="text"
+            value={currentSettings.promptPayName}
+            onChange={(e) => setCurrentSettings({ ...currentSettings, promptPayName: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            placeholder="ระบุชื่อเจ้าของบัญชี"
+          />
+        </div>
+      </div>
+      <div className="flex justify-end space-x-3 mt-4">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          ยกเลิก
+        </button>
+        <button
+          onClick={() => onSave(currentSettings)}
+          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+        >
+          บันทึกการตั้งค่า
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+interface NewItemFormProps {
+  onAddItem: (itemData: Omit<MenuItem, 'id'>) => void;
+  onCancel: () => void;
+}
+
+const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
+  const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
+
+  const handleAddItem = () => {
+    if (!newItem.name || !newItem.price || !newItem.category || parseInt(newItem.price) <= 0) return;
+
+    onAddItem({
+      name: newItem.name,
+      price: parseInt(newItem.price),
+      category: newItem.category
+    });
+
+    setNewItem({ name: '', price: '', category: '' });
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+      <h2 className="text-lg font-semibold mb-4">เพิ่มเมนูใหม่</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อเมนู</label>
+          <input
+            type="text"
+            value={newItem.name}
+            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="ระบุชื่อเมนู"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ราคา</label>
+          <input
+            type="number"
+            value={newItem.price}
+            onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="ระบุราคา"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">หมวดหมู่</label>
+          <select
+            value={newItem.category}
+            onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">เลือกหมวดหมู่</option>
+            <option value="ข้าว">ข้าว</option>
+            <option value="เส้น">เส้น</option>
+            <option value="แกง">แกง</option>
+            <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+            <option value="ของหวาน">ของหวาน</option>
+            <option value="อื่นๆ">อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex justify-end space-x-3 mt-4">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          ยกเลิก
+        </button>
+        <button
+          onClick={handleAddItem}
+          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+        >
+          เพิ่มเมนู
+        </button>
+      </div>
+    </div>
+  );
+};
+
+interface MenuItemEditFormProps {
+  item: MenuItem;
+  onSave: (updatedItem: Partial<MenuItem>) => void;
+  onCancel: () => void;
+}
+
+const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => {
+  const [editData, setEditData] = useState<Omit<MenuItem, 'id'>>({
+    name: item.name,
+    price: item.price,
+    category: item.category
+  });
+
+  const handleSave = () => {
+    if (!editData.name || !editData.price || !editData.category) return;
+    onSave({
+      name: editData.name,
+      price: editData.price,
+      category: editData.category
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      <input
+        type="text"
+        value={editData.name}
+        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        placeholder="ชื่อเมนู"
+      />
+      <input
+        type="number"
+        value={editData.price}
+        onChange={(e) => setEditData({ ...editData, price: parseInt(e.target.value) || 0 })}
+        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        placeholder="ราคา"
+      />
+      <select
+        value={editData.category}
+        onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      >
+        <option value="ข้าว">ข้าว</option>
+        <option value="เส้น">เส้น</option>
+        <option value="แกง">แกง</option>
+        <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+        <option value="ของหวาน">ของหวาน</option>
+        <option value="อื่นๆ">อื่นๆ</option>
+      </select>
+      <div className="flex justify-end space-x-2">
+        <button
+          onClick={onCancel}
+          className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          <X size={16} />
+        </button>
+        <button
+          onClick={handleSave}
+          className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition-colors"
+        >
+          <Save size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+// ====================================================================
+// ส่วนที่ 4: คอมโพเนนต์หลัก RestaurantApp
+// ====================================================================
+
 const RestaurantApp = () => {
-  // สร้าง state สำหรับการจัดการข้อมูลต่างๆ พร้อมกำหนดประเภทข้อมูล
   const [currentPage, setCurrentPage] = useState<string>('dashboard');
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
-  const [newItem, setNewItem] = useState<{ name: string; price: string; category: string }>({ name: '', price: '', category: '' });
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
     shopName: 'ร้านอาหารตามสั่ง',
-    promptPayId: '0123456789',
+    promptPayId: '0812345678', // Default ID ที่คุณสามารถเปลี่ยนได้
     promptPayName: 'นายสมชาย ใจดี'
   });
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
-  // useEffect สำหรับโหลดข้อมูลจาก localStorage เมื่อ Component โหลดครั้งแรก
+  // useEffect สำหรับโหลดข้อมูลจาก localStorage
   useEffect(() => {
     const savedMenuItems = localStorage.getItem('menuItems');
     const savedBills = localStorage.getItem('bills');
@@ -52,7 +360,6 @@ const RestaurantApp = () => {
     if (savedMenuItems) {
       setMenuItems(JSON.parse(savedMenuItems));
     } else {
-      // ข้อมูลเริ่มต้นหากไม่มีใน localStorage
       const initialMenuItems: MenuItem[] = [
         { id: 1, name: 'ข้าวผัดกุ้ง', price: 60, category: 'ข้าว' },
         { id: 2, name: 'ข้าวผัดหมู', price: 50, category: 'ข้าว' },
@@ -75,7 +382,7 @@ const RestaurantApp = () => {
     }
   }, []);
 
-  // useEffect สำหรับบันทึกข้อมูลลง localStorage เมื่อ state มีการเปลี่ยนแปลง
+  // useEffect สำหรับบันทึกข้อมูลลง localStorage
   useEffect(() => {
     localStorage.setItem('menuItems', JSON.stringify(menuItems));
   }, [menuItems]);
@@ -95,7 +402,6 @@ const RestaurantApp = () => {
     const todayRevenue = todayBills.reduce((sum: number, bill: Bill) => sum + bill.total, 0);
     const totalRevenue = bills.reduce((sum: number, bill: Bill) => sum + bill.total, 0);
 
-    // เมนูขายดี
     const itemSales: { [key: string]: number } = {};
     bills.forEach(bill => {
       bill.items.forEach(item => {
@@ -132,21 +438,16 @@ const RestaurantApp = () => {
     }
   };
 
-  // เพิ่มเมนูใหม่
-  const addMenuItem = () => {
-    if (!newItem.name || !newItem.price || !newItem.category) return;
-
+  // เพิ่มเมนูใหม่ (รับข้อมูลที่สมบูรณ์จาก NewItemForm)
+  const addMenuItem = (itemData: Omit<MenuItem, 'id'>) => {
     const nextId = menuItems.length > 0 ? Math.max(...menuItems.map(item => item.id)) + 1 : 1;
     const item: MenuItem = {
       id: nextId,
-      name: newItem.name,
-      price: parseInt(newItem.price),
-      category: newItem.category
+      ...itemData
     };
 
     setMenuItems([...menuItems, item]);
-    setNewItem({ name: '', price: '', category: '' });
-    setShowAddForm(false);
+    setShowAddForm(false); // ปิดฟอร์มหลังจากเพิ่มสำเร็จ
   };
 
   // อัพเดทเมนู
@@ -160,15 +461,6 @@ const RestaurantApp = () => {
   // ลบเมนู
   const deleteMenuItem = (id: number) => {
     setMenuItems(menuItems.filter(item => item.id !== id));
-  };
-
-  // สร้าง QR Code PromptPay
-  const generatePromptPayQR = (amount: number) => {
-    // รูปแบบ QR Code สำหรับ PromptPay
-    const promptPayId = shopSettings.promptPayId.replace(/-/g, '');
-    const amountStr = amount.toFixed(2);
-    // สร้าง URL สำหรับ QR Code โดยใช้ qr-server
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`00020101021129370016A000000677010111${promptPayId.padStart(13, '0')}54${amountStr}5802TH`)}`;
   };
 
   // อัพเดทจำนวนในออเดอร์
@@ -209,7 +501,10 @@ const RestaurantApp = () => {
     setCurrentPage('bill');
   };
 
-  // หน้าจัดการเมนู
+  // ====================================================================
+  // ส่วนที่ 5: คอมโพเนนต์หน้าต่างๆ
+  // ====================================================================
+
   const MenuManagePage = () => (
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
@@ -232,124 +527,24 @@ const RestaurantApp = () => {
         </div>
       </div>
 
-      {/* ฟอร์มตั้งค่าร้าน */}
       {showSettingsForm && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h2 className="text-lg font-semibold mb-4">ตั้งค่าข้อมูลร้าน & PromptPay</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อร้าน</label>
-              <input
-                type="text"
-                value={shopSettings.shopName}
-                onChange={(e) => setShopSettings({ ...shopSettings, shopName: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="ระบุชื่อร้าน"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                เลขที่ PromptPay (เบอร์โทร หรือ เลขประจำตัว)
-              </label>
-              <input
-                type="text"
-                value={shopSettings.promptPayId}
-                onChange={(e) => setShopSettings({ ...shopSettings, promptPayId: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="เช่น 0812345678 หรือ 1234567890123"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อเจ้าของบัญชี</label>
-              <input
-                type="text"
-                value={shopSettings.promptPayName}
-                onChange={(e) => setShopSettings({ ...shopSettings, promptPayName: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="ระบุชื่อเจ้าของบัญชี"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end space-x-3 mt-4">
-            <button
-              onClick={() => setShowSettingsForm(false)}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={() => setShowSettingsForm(false)}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
-            >
-              บันทึกการตั้งค่า
-            </button>
-          </div>
-        </div>
+        <ShopSettingsForm
+          initialSettings={shopSettings}
+          onSave={(newSettings) => {
+            setShopSettings(newSettings);
+            setShowSettingsForm(false);
+          }}
+          onCancel={() => setShowSettingsForm(false)}
+        />
       )}
 
-      {/* ฟอร์มเพิ่มเมนูใหม่ */}
       {showAddForm && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h2 className="text-lg font-semibold mb-4">เพิ่มเมนูใหม่</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อเมนู</label>
-              <input
-                type="text"
-                value={newItem.name}
-                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="ระบุชื่อเมนู"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ราคา</label>
-              <input
-                type="number"
-                value={newItem.price}
-                onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="ระบุราคา"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">หมวดหมู่</label>
-              <select
-                value={newItem.category}
-                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">เลือกหมวดหมู่</option>
-                <option value="ข้าว">ข้าว</option>
-                <option value="เส้น">เส้น</option>
-                <option value="แกง">แกง</option>
-                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-                <option value="ของหวาน">ของหวาน</option>
-                <option value="อื่นๆ">อื่นๆ</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end space-x-3 mt-4">
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                setNewItem({ name: '', price: '', category: '' });
-              }}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={addMenuItem}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-            >
-              เพิ่มเมนู
-            </button>
-          </div>
-        </div>
+        <NewItemForm
+          onAddItem={addMenuItem}
+          onCancel={() => setShowAddForm(false)}
+        />
       )}
 
-      {/* รายการเมนู */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">รายการเมนูทั้งหมด</h2>
@@ -398,81 +593,11 @@ const RestaurantApp = () => {
       </div>
     </div>
   );
-
-  interface MenuItemEditFormProps {
-    item: MenuItem;
-    onSave: (updatedItem: Partial<MenuItem>) => void;
-    onCancel: () => void;
-  }
-
-  // คอมโพเนนต์ฟอร์มแก้ไขเมนู
-  const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => {
-    const [editData, setEditData] = useState<Omit<MenuItem, 'id'>>({
-      name: item.name,
-      price: item.price,
-      category: item.category
-    });
-
-    const handleSave = () => {
-      if (!editData.name || !editData.price || !editData.category) return;
-      onSave({
-        name: editData.name,
-        price: editData.price,
-        category: editData.category
-      });
-    };
-
-    return (
-      <div className="space-y-3">
-        <input
-          type="text"
-          value={editData.name}
-          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="ชื่อเมนู"
-        />
-        <input
-          type="number"
-          value={editData.price}
-          onChange={(e) => setEditData({ ...editData, price: parseInt(e.target.value) })}
-          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="ราคา"
-        />
-        <select
-          value={editData.category}
-          onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="ข้าว">ข้าว</option>
-          <option value="เส้น">เส้น</option>
-          <option value="แกง">แกง</option>
-          <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-          <option value="ของหวาน">ของหวาน</option>
-          <option value="อื่นๆ">อื่นๆ</option>
-        </select>
-        <div className="flex justify-end space-x-2">
-          <button
-            onClick={onCancel}
-            className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <X size={16} />
-          </button>
-          <button
-            onClick={handleSave}
-            className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition-colors"
-          >
-            <Save size={16} />
-          </button>
-        </div>
-      </div>
-    );
-  };
-
+  
   const DashboardPage = () => (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">แดชบอร์ดร้านอาหาร</h1>
 
-      {/* สถิติหลัก */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="flex items-center justify-between">
@@ -515,7 +640,6 @@ const RestaurantApp = () => {
         </div>
       </div>
 
-      {/* เมนูขายดี */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold mb-4">เมนูขายดี TOP 5</h2>
         <div className="space-y-3">
@@ -533,7 +657,6 @@ const RestaurantApp = () => {
         </div>
       </div>
 
-      {/* รายการออเดอร์ล่าสุด */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold mb-4">ออเดอร์ล่าสุด</h2>
         {bills.length === 0 ? (
@@ -556,13 +679,11 @@ const RestaurantApp = () => {
     </div>
   );
 
-  // หน้าเพิ่มออเดอร์
   const OrderPage = () => (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">รับออเดอร์</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* เมนูอาหาร */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">เมนูอาหาร</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -584,7 +705,6 @@ const RestaurantApp = () => {
           </div>
         </div>
 
-        {/* ออเดอร์ปัจจุบัน */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold mb-4">ออเดอร์ปัจจุบัน</h2>
 
@@ -641,7 +761,6 @@ const RestaurantApp = () => {
     </div>
   );
 
-  // หน้าบิล
   const BillPage = () => {
     const latestBill = bills[bills.length - 1];
 
@@ -650,14 +769,14 @@ const RestaurantApp = () => {
         <h1 className="text-2xl font-bold text-gray-800 mb-6">ออกบิล</h1>
 
         {latestBill ? (
-          <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg border">
+          <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg border print:shadow-none print:border-none">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold">{shopSettings.shopName}</h2>
               <p className="text-gray-500">บิลเลขที่ #{latestBill.id}</p>
               <p className="text-sm text-gray-500">{new Date(latestBill.date).toLocaleString('th-TH')}</p>
             </div>
 
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-6 border-b pb-4">
               {latestBill.items.map((item, index) => (
                 <div key={index} className="flex justify-between">
                   <span>{item.name} x{item.quantity}</span>
@@ -673,14 +792,15 @@ const RestaurantApp = () => {
               </div>
             </div>
 
-            {/* QR Code PromptPay */}
-            <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            {/* QR Code PromptPay ที่ถูกแก้ไข */}
+            <div className="bg-blue-50 p-4 rounded-lg mb-6 print:hidden">
               <h3 className="text-center font-semibold text-blue-800 mb-3">
                 💳 ชำระเงินผ่าน PromptPay
               </h3>
               <div className="flex justify-center mb-3">
+                {/* 📌 เรียกใช้ generatePromptPayQR โดยส่ง shopSettings เข้าไปด้วย */}
                 <img
-                  src={generatePromptPayQR(latestBill.total)}
+                  src={generatePromptPayQR(latestBill.total, shopSettings)} 
                   alt="PromptPay QR Code"
                   className="w-48 h-48 border-2 border-blue-200 rounded-lg"
                 />
@@ -696,7 +816,7 @@ const RestaurantApp = () => {
               ขอบคุณที่ใช้บริการ
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 print:hidden">
               <button
                 onClick={() => window.print()}
                 className="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
@@ -726,13 +846,11 @@ const RestaurantApp = () => {
     );
   };
 
-  // หน้ารายงาน
   const ReportPage = () => (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">รายงานยอดขาย</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* สรุปยอดขาย */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold mb-4">สรุปยอดขาย</h2>
           <div className="space-y-3">
@@ -755,7 +873,6 @@ const RestaurantApp = () => {
           </div>
         </div>
 
-        {/* รายการบิลทั้งหมด */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold mb-4">รายการบิลทั้งหมด</h2>
           <div className="max-h-64 overflow-y-auto space-y-2">
@@ -781,13 +898,33 @@ const RestaurantApp = () => {
     </div>
   );
 
+  // ====================================================================
+  // ส่วนที่ 6: การแสดงผลหลัก (Main Render)
+  // ====================================================================
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return <DashboardPage />;
+      case 'order':
+        return <OrderPage />;
+      case 'bill':
+        return <BillPage />;
+      case 'report':
+        return <ReportPage />;
+      case 'menu':
+        return <MenuManagePage />;
+      default:
+        return <DashboardPage />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 font-[Inter]">
-      {/* Navigation */}
       <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center py-4 flex-wrap">
-            <h1 className="text-xl font-bold text-gray-800">ระบบจัดการร้านอาหาร</h1>
+            <h1 className="text-xl font-bold text-gray-800">{shopSettings.shopName}</h1>
             <div className="flex space-x-4 mt-4 lg:mt-0 overflow-x-auto pb-2">
               <button
                 onClick={() => setCurrentPage('dashboard')}
@@ -820,18 +957,7 @@ const RestaurantApp = () => {
                 }`}
               >
                 <Receipt size={20} />
-                <span>บิล</span>
-              </button>
-              <button
-                onClick={() => setCurrentPage('menu')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                  currentPage === 'menu'
-                    ? 'bg-blue-500 text-white shadow'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Settings size={20} />
-                <span>จัดการเมนู</span>
+                <span>บิลล่าสุด</span>
               </button>
               <button
                 onClick={() => setCurrentPage('report')}
@@ -844,19 +970,29 @@ const RestaurantApp = () => {
                 <BarChart3 size={20} />
                 <span>รายงาน</span>
               </button>
+              <button
+                onClick={() => setCurrentPage('menu')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                  currentPage === 'menu'
+                    ? 'bg-blue-500 text-white shadow'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Package size={20} />
+                <span>จัดการเมนู</span>
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto">
-        {currentPage === 'dashboard' && <DashboardPage />}
-        {currentPage === 'order' && <OrderPage />}
-        {currentPage === 'bill' && <BillPage />}
-        {currentPage === 'menu' && <MenuManagePage />}
-        {currentPage === 'report' && <ReportPage />}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderPage()}
       </main>
+
+      <footer className="text-center py-4 text-xs text-gray-500 border-t mt-8 print:hidden">
+        ระบบจัดการร้านอาหาร by Gemini (React + Tailwind CSS)
+      </footer>
     </div>
   );
 };
