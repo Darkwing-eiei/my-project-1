@@ -345,9 +345,9 @@ const RestaurantApp = () => {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
-    shopName: 'ร้านอาหารตามสั่ง',
-    promptPayId: '0812345678', // Default ID ที่คุณสามารถเปลี่ยนได้
-    promptPayName: 'นายสมชาย ใจดี'
+    shopName: '',
+    promptPayId: '', // Default ID ที่คุณสามารถเปลี่ยนได้
+    promptPayName: ''
   });
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
