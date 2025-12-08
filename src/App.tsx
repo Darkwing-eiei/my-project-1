@@ -354,9 +354,9 @@ const RestaurantApp = () => {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
-    shopName: 'ร้านอาหารตัวอย่าง',
-    promptPayId: '0812345678', 
-    promptPayName: 'นายตัวอย่าง เจ้าของร้าน'
+    shopName: '',
+    promptPayId: '', 
+    promptPayName: ''
   });
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
