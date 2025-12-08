@@ -230,7 +230,7 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">หมวดหมู่</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">หมวดหมู่
           <select
             value={newItem.category}
             onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
@@ -244,6 +244,7 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
             <option value="ของหวาน">ของหวาน</option>
             <option value="อื่นๆ">อื่นๆ</option>
           </select>
+          </label>
         </div>
       </div>
       <div className="flex justify-end space-x-3 mt-4">
@@ -302,6 +303,8 @@ const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => 
         className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         placeholder="ราคา"
       />
+      <label>
+      หมวดหมู่
       <select
         value={editData.category}
         onChange={(e) => setEditData({ ...editData, category: e.target.value })}
@@ -314,19 +317,24 @@ const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => 
         <option value="ของหวาน">ของหวาน</option>
         <option value="อื่นๆ">อื่นๆ</option>
       </select>
+      </label>
       <div className="flex justify-end space-x-2">
-        <button
-          onClick={onCancel}
-          className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          <X size={16} />
-        </button>
-        <button
-          onClick={handleSave}
-          className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition-colors"
-        >
-          <Save size={16} />
-        </button>
+      <button
+  onClick={onCancel}
+  aria-label="ปิด"
+  className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors"
+>
+  <X size={16} />
+</button>
+
+<button
+  onClick={handleSave}
+  aria-label="บันทึก"
+  className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition-colors"
+>
+  <Save size={16} />
+</button>
+
       </div>
     </div>
   );
@@ -571,18 +579,20 @@ const RestaurantApp = () => {
                       </div>
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => setEditingItem(item.id)}
-                        className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => deleteMenuItem(item.id)}
-                        className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    <button
+  onClick={() => setEditingItem(item.id)}
+  aria-label="แก้ไข"
+  className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors"
+>
+  <Edit size={16} />
+</button>
+<button
+  onClick={() => deleteMenuItem(item.id)}
+  aria-label="ลบรายการ"
+  className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors"
+>
+  <Trash2 size={16} />
+</button>
                     </div>
                   </div>
                 )}
@@ -719,25 +729,28 @@ const RestaurantApp = () => {
                     <p className="text-sm text-gray-500">฿{item.price} x {item.quantity}</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="bg-red-100 text-red-600 p-1 rounded hover:bg-red-200"
-                    >
-                      <Minus size={16} />
-                    </button>
+                  <button
+  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+  aria-label="ลดจำนวน"
+  className="bg-red-100 text-red-600 p-1 rounded hover:bg-red-200"
+>
+  <Minus size={16} />
+</button>
                     <span className="mx-2 font-medium">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="bg-green-100 text-green-600 p-1 rounded hover:bg-green-200"
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <button
-                      onClick={() => removeFromOrder(item.id)}
-                      className="bg-gray-100 text-red-600 p-1 rounded hover:bg-gray-200 ml-2"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+  aria-label="เพิ่มจำนวน"
+  className="bg-green-100 text-green-600 p-1 rounded hover:bg-green-200"
+>
+  <Plus size={16} />
+</button>
+<button
+  onClick={() => removeFromOrder(item.id)}
+  aria-label="ลบรายการ"
+  className="bg-gray-100 text-red-600 p-1 rounded hover:bg-gray-200 ml-2"
+>
+  <Trash2 size={16} />
+</button>
                   </div>
                 </div>
               ))}
