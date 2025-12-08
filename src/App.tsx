@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Receipt, BarChart3, Home, Plus, Minus, Trash2, TrendingUp, DollarSign, Package, Users, Settings, Edit, Save, X } from 'lucide-react';
-// 📌 เพิ่มส่วนนี้: นำเข้าคอมโพเนนต์กราฟจาก Recharts
+// 📌 นำเข้าคอมโพเนนต์กราฟจาก Recharts
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'; 
 
 // ====================================================================
@@ -354,8 +354,8 @@ const RestaurantApp = () => {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
-    shopName: 'ร้านอาหารตัวอย่าง', // กำหนดค่าเริ่มต้น
-    promptPayId: '0812345678', // Default ID ที่คุณสามารถเปลี่ยนได้
+    shopName: 'ร้านอาหารตัวอย่าง',
+    promptPayId: '0812345678', 
     promptPayName: 'นายตัวอย่าง เจ้าของร้าน'
   });
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
@@ -387,7 +387,8 @@ const RestaurantApp = () => {
     }
 
     if (savedShopSettings) {
-      setShopSettings(JSON.parse(savedShopSettings));
+      // ใช้การรวมข้อมูลเดิมเพื่อให้มั่นใจว่าฟิลด์ทั้งหมดถูกตั้งค่า
+      setShopSettings(prev => ({...prev, ...JSON.parse(savedShopSettings)}));
     }
   }, []);
 
@@ -418,18 +419,23 @@ const RestaurantApp = () => {
       });
     });
 
+    // 📌 แก้ไข TS2532 ที่นี่: ใช้ (?? 0) ก่อนคูณ
     const topItems = Object.entries(itemSales)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      // 📌 ปรับปรุง: เพิ่มการคำนวณรายได้ต่อเมนูสำหรับกราฟ
-      .map(([name, quantity]) => ({ name, quantity, revenue: menuItems.find(i => i.name === name)?.price * quantity || 0 })); 
+      .map(([name, quantity]) => ({ 
+        name, 
+        quantity, 
+        // FIX: ใช้ (menuItems.find(...)?.price ?? 0) เพื่อจัดการ undefined ก่อนการคูณ
+        revenue: (menuItems.find(i => i.name === name)?.price ?? 0) * quantity 
+      })); 
 
-    // 📌 เพิ่ม: คำนวณยอดขายรายวันในช่วง 7 วันล่าสุดสำหรับกราฟแท่ง (Daily Revenue)
+    // คำนวณยอดขายรายวันในช่วง 7 วันล่าสุดสำหรับกราฟแท่ง (Daily Revenue)
     const dailyRevenue: { [key: string]: number } = {};
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 6); 
 
-    // กำหนดวันที่ 7 วันล่วงหน้าเพื่อแสดงผลในกราฟให้ครบ แม้ไม่มีบิล
+    // กำหนดวันที่ 7 วันล่วงหน้าเพื่อแสดงผลในกราฟให้ครบ
     for (let i = 0; i < 7; i++) {
         const date = new Date(oneWeekAgo);
         date.setDate(oneWeekAgo.getDate() + i);
@@ -457,8 +463,8 @@ const RestaurantApp = () => {
       totalRevenue,
       todayOrders: todayBills.length,
       totalOrders: bills.length,
-      topItems,
-      revenueData // 📌 ส่งข้อมูลยอดขายรายวันออกไปด้วย
+      topItems, 
+      revenueData 
     };
   };
 
@@ -640,6 +646,7 @@ const RestaurantApp = () => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">แดชบอร์ดร้านอาหาร</h1>
 
+      {/* สถิติหลัก */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="flex items-center justify-between">
@@ -682,7 +689,7 @@ const RestaurantApp = () => {
         </div>
       </div>
       
-      {/* 📌 ส่วนที่เพิ่ม: แถบกราฟ */}
+      {/* 📌 ส่วนกราฟ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* กราฟยอดขายรายวัน (Bar Chart) */}
@@ -712,7 +719,7 @@ const RestaurantApp = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.topItems} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis type="number" stroke="#6b7280" />
+                <XAxis type="number" stroke="#6b7280" /> 
                 <YAxis dataKey="name" type="category" stroke="#6b7280" />
                 <Tooltip 
                   formatter={(value: number, name: string) => {
@@ -729,12 +736,13 @@ const RestaurantApp = () => {
           </div>
         </div>
       </div>
-      {/* 📌 จบส่วนที่เพิ่ม */}
-
+      {/* 📌 จบส่วนกราฟ */}
+      
+      {/* รายการเมนูขายดี */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold mb-4">เมนูขายดี TOP 5</h2>
         <div className="space-y-3">
-          {stats.topItems.map((item, index) => (
+          {stats.topItems.map((item, index) => ( 
             <div key={item.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3">
                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
@@ -742,7 +750,8 @@ const RestaurantApp = () => {
                 </span>
                 <span className="font-medium">{item.name}</span>
               </div>
-              <span className="text-gray-600">{item.quantity} จาน (฿{item.revenue.toLocaleString()})</span> {/* ปรับให้แสดงรายได้ด้วย */}
+              {/* แสดงจำนวนและรายได้ */}
+              <span className="text-gray-600">{item.quantity} จาน (฿{item.revenue.toLocaleString()})</span> 
             </div>
           ))}
         </div>
