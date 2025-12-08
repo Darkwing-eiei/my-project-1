@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Receipt, BarChart3, Home, Plus, Minus, Trash2, TrendingUp, DollarSign, Package, Users, Settings, Edit, Save, X } from 'lucide-react';
+// 📌 เพิ่มส่วนนี้: นำเข้าคอมโพเนนต์กราฟจาก Recharts
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'; 
 
 // ====================================================================
 // ส่วนที่ 1: การกำหนดประเภทข้อมูล (Interfaces)
@@ -32,7 +34,6 @@ interface ShopSettings {
 
 // ====================================================================
 // 📌 ส่วนที่ 2: ฟังก์ชันสำหรับ PromptPay QR Code (CRC Calculation)
-//    - วางไว้นอกคอมโพเนนต์หลัก เพื่อให้เรียกใช้งานได้ง่าย
 // ====================================================================
 
 // ฟังก์ชันสำหรับคำนวณ CRC16-CCITT Checksum (XMODEM)
@@ -353,9 +354,9 @@ const RestaurantApp = () => {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
-    shopName: '',
-    promptPayId: '', // Default ID ที่คุณสามารถเปลี่ยนได้
-    promptPayName: ''
+    shopName: 'ร้านอาหารตัวอย่าง', // กำหนดค่าเริ่มต้น
+    promptPayId: '0812345678', // Default ID ที่คุณสามารถเปลี่ยนได้
+    promptPayName: 'นายตัวอย่าง เจ้าของร้าน'
   });
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
@@ -419,14 +420,45 @@ const RestaurantApp = () => {
 
     const topItems = Object.entries(itemSales)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5);
+      .slice(0, 5)
+      // 📌 ปรับปรุง: เพิ่มการคำนวณรายได้ต่อเมนูสำหรับกราฟ
+      .map(([name, quantity]) => ({ name, quantity, revenue: menuItems.find(i => i.name === name)?.price * quantity || 0 })); 
+
+    // 📌 เพิ่ม: คำนวณยอดขายรายวันในช่วง 7 วันล่าสุดสำหรับกราฟแท่ง (Daily Revenue)
+    const dailyRevenue: { [key: string]: number } = {};
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 6); 
+
+    // กำหนดวันที่ 7 วันล่วงหน้าเพื่อแสดงผลในกราฟให้ครบ แม้ไม่มีบิล
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(oneWeekAgo);
+        date.setDate(oneWeekAgo.getDate() + i);
+        // รูปแบบ 'dd/mm' เช่น 08/12
+        const dateString = date.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' }); 
+        dailyRevenue[dateString] = 0;
+    }
+
+    // รวมยอดบิลเข้ากับวันที่
+    bills.forEach(bill => {
+        const billDate = new Date(bill.date);
+        if (billDate >= oneWeekAgo) {
+            const dateString = billDate.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' });
+            dailyRevenue[dateString] = (dailyRevenue[dateString] || 0) + bill.total;
+        }
+    });
+
+    // แปลงเป็น Array สำหรับ Recharts และเรียงตามวันที่
+    const revenueData = Object.entries(dailyRevenue)
+        .map(([date, revenue]) => ({ date, revenue }));
+
 
     return {
       todayRevenue,
       totalRevenue,
       todayOrders: todayBills.length,
       totalOrders: bills.length,
-      topItems
+      topItems,
+      revenueData // 📌 ส่งข้อมูลยอดขายรายวันออกไปด้วย
     };
   };
 
@@ -649,19 +681,68 @@ const RestaurantApp = () => {
           </div>
         </div>
       </div>
+      
+      {/* 📌 ส่วนที่เพิ่ม: แถบกราฟ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* กราฟยอดขายรายวัน (Bar Chart) */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-lg font-semibold mb-4">ยอดขาย 7 วันล่าสุด (บาท)</h2>
+          <div className="w-full h-[300px]"> {/* ใช้ Tailwind Class แทน Inline Style */}
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.revenueData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis dataKey="date" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip 
+                  formatter={(value: number) => [`฿${value.toLocaleString()}`, 'ยอดขาย']} 
+                  labelFormatter={(label) => `วันที่: ${label}`}
+                />
+                <Legend />
+                <Bar dataKey="revenue" fill="#3b82f6" name="ยอดขาย" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* กราฟเมนูขายดี (Bar Chart) */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-lg font-semibold mb-4">รายได้จากเมนูขายดี TOP 5 (บาท)</h2>
+          <div className="w-full h-[300px]"> {/* ใช้ Tailwind Class แทน Inline Style */}
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.topItems} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis type="number" stroke="#6b7280" />
+                <YAxis dataKey="name" type="category" stroke="#6b7280" />
+                <Tooltip 
+                  formatter={(value: number, name: string) => {
+                    if (name === 'revenue') return [`฿${value.toLocaleString()}`, 'รายได้'];
+                    if (name === 'quantity') return [`${value.toLocaleString()} จาน`, 'จำนวน'];
+                    return [value.toLocaleString(), name];
+                  }} 
+                  labelFormatter={(label) => `เมนู: ${label}`}
+                />
+                <Legend />
+                <Bar dataKey="revenue" fill="#10b981" name="รายได้" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+      {/* 📌 จบส่วนที่เพิ่ม */}
 
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold mb-4">เมนูขายดี TOP 5</h2>
         <div className="space-y-3">
-          {stats.topItems.map(([itemName, quantity], index) => (
-            <div key={itemName} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          {stats.topItems.map((item, index) => (
+            <div key={item.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3">
                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
                   #{index + 1}
                 </span>
-                <span className="font-medium">{itemName}</span>
+                <span className="font-medium">{item.name}</span>
               </div>
-              <span className="text-gray-600">{quantity} จาน</span>
+              <span className="text-gray-600">{item.quantity} จาน (฿{item.revenue.toLocaleString()})</span> {/* ปรับให้แสดงรายได้ด้วย */}
             </div>
           ))}
         </div>
@@ -805,13 +886,12 @@ const RestaurantApp = () => {
               </div>
             </div>
 
-            {/* QR Code PromptPay ที่ถูกแก้ไข */}
+            {/* QR Code PromptPay */}
             <div className="bg-blue-50 p-4 rounded-lg mb-6 print:hidden">
               <h3 className="text-center font-semibold text-blue-800 mb-3">
                 💳 ชำระเงินผ่าน PromptPay
               </h3>
               <div className="flex justify-center mb-3">
-                {/* 📌 เรียกใช้ generatePromptPayQR โดยส่ง shopSettings เข้าไปด้วย */}
                 <img
                   src={generatePromptPayQR(latestBill.total, shopSettings)} 
                   alt="PromptPay QR Code"
