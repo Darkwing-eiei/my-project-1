@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Receipt, BarChart3, Home, Plus, Minus, Trash2, TrendingUp, DollarSign, Package, Users, Settings, Edit, Save, X, Menu as MenuIcon, Package2, ListOrdered, Printer } from 'lucide-react'; 
+// 📌 แก้ไข: ลบ ShoppingCart ออก
+import { Receipt, BarChart3, Home, Plus, Minus, Trash2, TrendingUp, DollarSign, Package, Users, Settings, Edit, Save, X, Menu as MenuIcon, Package2, ListOrdered, Printer } from 'lucide-react'; 
 // 📌 นำเข้าคอมโพเนนต์กราฟจาก Recharts
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'; 
 
@@ -150,8 +151,9 @@ const ShopSettingsForm = ({ initialSettings, onSave, onCancel }: ShopSettingsFor
       <h2 className="text-2xl font-bold text-slate-800 mb-4">⚙️ ตั้งค่าข้อมูลร้าน & PromptPay</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-2">ชื่อร้าน</label>
+          <label htmlFor="shop-name-input" className="block text-sm font-medium text-slate-700 mb-2">ชื่อร้าน</label>
           <input
+            id="shop-name-input"
             type="text"
             value={currentSettings.shopName}
             onChange={(e) => setCurrentSettings({ ...currentSettings, shopName: e.target.value })}
@@ -160,10 +162,11 @@ const ShopSettingsForm = ({ initialSettings, onSave, onCancel }: ShopSettingsFor
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label htmlFor="promptpay-id-input" className="block text-sm font-medium text-slate-700 mb-2">
             เลขที่ PromptPay (เบอร์โทร หรือ เลขประจำตัว)
           </label>
           <input
+            id="promptpay-id-input"
             type="text"
             value={currentSettings.promptPayId}
             onChange={(e) => setCurrentSettings({ ...currentSettings, promptPayId: e.target.value })}
@@ -172,8 +175,9 @@ const ShopSettingsForm = ({ initialSettings, onSave, onCancel }: ShopSettingsFor
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">ชื่อเจ้าของบัญชี</label>
+          <label htmlFor="promptpay-name-input" className="block text-sm font-medium text-slate-700 mb-2">ชื่อเจ้าของบัญชี</label>
           <input
+            id="promptpay-name-input"
             type="text"
             value={currentSettings.promptPayName}
             onChange={(e) => setCurrentSettings({ ...currentSettings, promptPayName: e.target.value })}
@@ -226,8 +230,9 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
       <h2 className="text-2xl font-bold text-slate-800 mb-4">➕ เพิ่มเมนูใหม่</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">ชื่อเมนู</label>
+          <label htmlFor="item-name-input" className="block text-sm font-medium text-slate-700 mb-2">ชื่อเมนู</label>
           <input
+            id="item-name-input"
             type="text"
             value={newItem.name}
             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
@@ -236,8 +241,9 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">ราคา</label>
+          <label htmlFor="item-price-input" className="block text-sm font-medium text-slate-700 mb-2">ราคา</label>
           <input
+            id="item-price-input"
             type="number"
             value={newItem.price}
             onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
@@ -246,8 +252,11 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">หมวดหมู่</label> 
+          <label htmlFor="item-category" className="block text-sm font-medium text-slate-700 mb-2">
+             หมวดหมู่
+          </label> 
           <select
+            id="item-category" // แก้ไข: เพิ่ม ID ให้ตรงกับ htmlFor ใน Label
             value={newItem.category}
             onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
             className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
@@ -305,23 +314,30 @@ const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => 
 
   return (
     <div className="space-y-4">
+      <label htmlFor={`edit-name-${item.id}`} className="sr-only">ชื่อเมนู</label>
       <input
+        id={`edit-name-${item.id}`}
         type="text"
         value={editData.name}
         onChange={(e) => setEditData({ ...editData, name: e.target.value })}
         className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
         placeholder="ชื่อเมนู"
       />
+      
+      <label htmlFor={`edit-price-${item.id}`} className="sr-only">ราคา</label>
       <input
+        id={`edit-price-${item.id}`}
         type="number"
         value={editData.price}
         onChange={(e) => setEditData({ ...editData, price: parseInt(e.target.value) || 0 })}
         className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
         placeholder="ราคา"
       />
-      <label className="block text-sm font-medium text-slate-700">
+      
+      <label htmlFor={`edit-category-${item.id}`} className="block text-sm font-medium text-slate-700">
         หมวดหมู่
         <select
+          id={`edit-category-${item.id}`}
           value={editData.category}
           onChange={(e) => setEditData({ ...editData, category: e.target.value })}
           className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150 mt-1"
