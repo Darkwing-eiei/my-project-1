@@ -124,13 +124,13 @@ const generatePromptPayQR = (amount: number, settings: ShopSettings): string => 
 
 // 3.1 Stat Card (สำหรับ Dashboard)
 const StatCard = ({ icon: Icon, label, value, color, textColor, iconColor }: { icon: any, label: string, value: string, color: string, textColor: string, iconColor: string }) => (
-  <div className={`${color} p-5 rounded-xl border border-slate-200 shadow-md`}>
+  <div className={`${color} p-4 sm:p-5 rounded-xl border border-slate-200 shadow-md`}> {/* ปรับ padding สำหรับมือถือ */}
     <div className="flex items-center justify-between">
       <div>
         <p className={`${textColor} text-sm font-medium`}>{label}</p>
-        <p className="text-3xl font-extrabold text-slate-800 mt-1">{value}</p>
+        <p className="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1">{value}</p> {/* ปรับขนาดตัวอักษร */}
       </div>
-      <Icon className={`${iconColor}`} size={30} />
+      <Icon className={`${iconColor}`} size={24} /> {/* ปรับขนาด Icon */}
     </div>
   </div>
 );
@@ -147,9 +147,9 @@ const ShopSettingsForm = ({ initialSettings, onSave, onCancel }: ShopSettingsFor
   const [currentSettings, setCurrentSettings] = useState<ShopSettings>(initialSettings);
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 mb-8">
-      <h2 className="text-2xl font-bold text-slate-800 mb-4">⚙️ ตั้งค่าข้อมูลร้าน & PromptPay</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100 mb-6 sm:mb-8"> {/* ปรับ padding/margin */}
+      <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-4">⚙️ ตั้งค่าข้อมูลร้าน & PromptPay</h2> {/* ปรับขนาดตัวอักษร */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <div className="col-span-1 md:col-span-2">
           <label htmlFor="shop-name-input" className="block text-sm font-medium text-slate-700 mb-2">ชื่อร้าน</label>
           <input
@@ -186,18 +186,18 @@ const ShopSettingsForm = ({ initialSettings, onSave, onCancel }: ShopSettingsFor
           />
         </div>
       </div>
-      <div className="flex justify-end space-x-3 mt-6">
+      <div className="flex justify-end space-x-3 mt-4 sm:mt-6">
         <button
           onClick={onCancel}
-          className="px-6 py-3 text-slate-600 border border-slate-300 rounded-xl hover:bg-slate-100 transition duration-200 font-medium"
+          className="px-4 sm:px-6 py-2 sm:py-3 text-slate-600 border border-slate-300 rounded-xl hover:bg-slate-100 transition duration-200 font-medium text-sm sm:text-base"
         >
           ยกเลิก
         </button>
         <button
           onClick={() => onSave(currentSettings)}
-          className="px-6 py-3 bg-teal-500 text-white rounded-xl shadow-md hover:bg-teal-600 transition duration-200 font-medium"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-teal-500 text-white rounded-xl shadow-md hover:bg-teal-600 transition duration-200 font-medium text-sm sm:text-base"
         >
-          <Save size={20} className="inline mr-2" /> บันทึกการตั้งค่า
+          <Save size={18} className="inline mr-1 sm:mr-2" /> บันทึกการตั้งค่า
         </button>
       </div>
     </div>
@@ -226,9 +226,9 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 mb-8">
-      <h2 className="text-2xl font-bold text-slate-800 mb-4">➕ เพิ่มเมนูใหม่</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100 mb-6 sm:mb-8"> {/* ปรับ padding/margin */}
+      <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-4">➕ เพิ่มเมนูใหม่</h2> {/* ปรับขนาดตัวอักษร */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <div>
           <label htmlFor="item-name-input" className="block text-sm font-medium text-slate-700 mb-2">ชื่อเมนู</label>
           <input
@@ -271,18 +271,18 @@ const NewItemForm = ({ onAddItem, onCancel }: NewItemFormProps) => {
           </select>
         </div>
       </div>
-      <div className="flex justify-end space-x-3 mt-6">
+      <div className="flex justify-end space-x-3 mt-4 sm:mt-6">
         <button
           onClick={onCancel}
-          className="px-6 py-3 text-slate-600 border border-slate-300 rounded-xl hover:bg-slate-100 transition duration-200 font-medium"
+          className="px-4 sm:px-6 py-2 sm:py-3 text-slate-600 border border-slate-300 rounded-xl hover:bg-slate-100 transition duration-200 font-medium text-sm sm:text-base"
         >
           ยกเลิก
         </button>
         <button
           onClick={handleAddItem}
-          className="px-6 py-3 bg-teal-500 text-white rounded-xl shadow-md hover:bg-teal-600 transition duration-200 font-medium"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-teal-500 text-white rounded-xl shadow-md hover:bg-teal-600 transition duration-200 font-medium text-sm sm:text-base"
         >
-          <Plus size={20} className="inline mr-2" /> เพิ่มเมนู
+          <Plus size={18} className="inline mr-1 sm:mr-2" /> เพิ่มเมนู
         </button>
       </div>
     </div>
@@ -313,14 +313,14 @@ const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <label htmlFor={`edit-name-${item.id}`} className="sr-only">ชื่อเมนู</label>
       <input
         id={`edit-name-${item.id}`}
         type="text"
         value={editData.name}
         onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
+        className="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
         placeholder="ชื่อเมนู"
       />
       
@@ -330,7 +330,7 @@ const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => 
         type="number"
         value={editData.price}
         onChange={(e) => setEditData({ ...editData, price: parseInt(e.target.value) || 0 })}
-        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
+        className="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150"
         placeholder="ราคา"
       />
       
@@ -340,7 +340,7 @@ const MenuItemEditForm = ({ item, onSave, onCancel }: MenuItemEditFormProps) => 
           id={`edit-category-${item.id}`}
           value={editData.category}
           onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-          className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150 mt-1"
+          className="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150 mt-1"
         >
           <option value="ข้าว">ข้าว</option>
           <option value="เส้น">เส้น</option>
@@ -581,20 +581,20 @@ const RestaurantApp = () => {
   // ====================================================================
 
   const MenuManagePage = () => (
-    <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-800">จัดการเมนูอาหาร 🍱</h1>
-        <div className="space-y-3 md:space-y-0 md:space-x-4 mt-4 md:mt-0">
+    <div className="p-4 sm:p-6 bg-slate-50 min-h-screen"> {/* ปรับ padding สำหรับมือถือ */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8"> {/* ปรับ align items */}
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-4 md:mb-0">จัดการเมนูอาหาร 🍱</h1> {/* ปรับขนาดตัวอักษร */}
+        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto"> {/* ปรับปุ่มให้เต็มความกว้างในมือถือ */}
           <button
             onClick={() => setShowSettingsForm(true)}
-            className="bg-slate-200 text-slate-700 px-6 py-3 rounded-xl hover:bg-slate-300 flex items-center justify-center space-x-2 w-full md:w-auto font-medium shadow-sm transition duration-200"
+            className="bg-slate-200 text-slate-700 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-slate-300 flex items-center justify-center space-x-2 w-full sm:w-auto font-medium shadow-sm transition duration-200 text-sm sm:text-base"
           >
             <Settings size={20} />
             <span>ตั้งค่าร้าน</span>
           </button>
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-teal-500 text-white px-6 py-3 rounded-xl hover:bg-teal-600 flex items-center justify-center space-x-2 w-full md:w-auto font-medium shadow-lg transition duration-200"
+            className="bg-teal-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-teal-600 flex items-center justify-center space-x-2 w-full sm:w-auto font-medium shadow-lg transition duration-200 text-sm sm:text-base"
           >
             <Plus size={20} />
             <span>เพิ่มเมนูใหม่</span>
@@ -621,15 +621,15 @@ const RestaurantApp = () => {
       )}
 
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100">
-        <div className="p-6 border-b border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-800">รายการเมนูทั้งหมด</h2>
+        <div className="p-4 sm:p-6 border-b border-slate-100"> {/* ปรับ padding */}
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-800">รายการเมนูทั้งหมด</h2> {/* ปรับขนาดตัวอักษร */}
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="p-4 sm:p-6"> {/* ปรับ padding */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"> {/* ปรับให้เป็น 1 คอลัมน์ในมือถือ และเพิ่มขึ้นตามขนาด */}
             {menuItems.map(item => (
               <div 
                 key={item.id} 
-                className="border border-slate-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-lg transition-all duration-300"
+                className="border border-slate-200 rounded-xl p-4 sm:p-5 bg-white shadow-sm hover:shadow-lg transition-all duration-300"
               >
                 {editingItem === item.id ? (
                   <MenuItemEditForm
@@ -641,9 +641,9 @@ const RestaurantApp = () => {
                   <div>
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-xl text-slate-800">{item.name}</h3>
-                        <p className="text-teal-600 font-extrabold text-2xl mt-1">฿{item.price}</p> 
-                        <p className="text-sm text-slate-600 bg-teal-50 px-3 py-1 rounded-full inline-block mt-2 font-medium">
+                        <h3 className="font-bold text-lg sm:text-xl text-slate-800">{item.name}</h3>
+                        <p className="text-teal-600 font-extrabold text-xl sm:text-2xl mt-1">฿{item.price}</p> 
+                        <p className="text-xs sm:text-sm text-slate-600 bg-teal-50 px-3 py-1 rounded-full inline-block mt-2 font-medium">
                           {item.category}
                         </p>
                       </div>
@@ -675,11 +675,11 @@ const RestaurantApp = () => {
   );
   
   const DashboardPage = () => (
-    <div className="p-6 space-y-8 bg-slate-50 min-h-screen">
-      <h1 className="text-3xl font-extrabold text-slate-800 mb-6">📊 แดชบอร์ดร้านอาหาร</h1>
+    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 bg-slate-50 min-h-screen"> {/* ปรับ padding/space */}
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-4 sm:mb-6">📊 แดชบอร์ดร้านอาหาร</h1> {/* ปรับขนาดตัวอักษร */}
 
       {/* สถิติหลัก */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"> {/* ปรับ Grid stat card */}
         <StatCard 
           icon={DollarSign} 
           label="ยอดขายวันนี้" 
@@ -715,23 +715,23 @@ const RestaurantApp = () => {
       </div>
       
       {/* 📌 ส่วนกราฟ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"> {/* ปรับ Grid กราฟ */}
         
         {/* กราฟยอดขายรายวัน (Bar Chart) */}
-        <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">ยอดขาย 7 วันล่าสุด (บาท)</h2>
-          <div className="w-full h-[300px]">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100">
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-4">ยอดขาย 7 วันล่าสุด (บาท)</h2>
+          <div className="w-full h-[250px] sm:h-[300px]"> {/* ปรับความสูงสำหรับมือถือ */}
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.revenueData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={stats.revenueData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}> {/* ปรับ margin สำหรับมือถือ */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
+                <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 10 }} /> {/* ปรับขนาดตัวอักษร */}
+                <YAxis stroke="#94a3b8" tickFormatter={(value) => value.toLocaleString()} tick={{ fontSize: 10 }} /> {/* ปรับขนาดตัวอักษร */}
                 <Tooltip 
                   formatter={(value: number) => [`฿${value.toLocaleString()}`, 'ยอดขาย']} 
                   labelFormatter={(label) => `วันที่: ${label}`}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff', fontSize: '12px' }}
                 />
-                <Legend />
+                <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="revenue" fill="#14b8a6" name="ยอดขาย" radius={[4, 4, 0, 0]} /> 
               </BarChart>
             </ResponsiveContainer>
@@ -739,14 +739,14 @@ const RestaurantApp = () => {
         </div>
 
         {/* กราฟเมนูขายดี (Bar Chart) */}
-        <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">รายได้จากเมนูขายดี TOP 5 (บาท)</h2>
-          <div className="w-full h-[300px]">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100">
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-4">รายได้จากเมนูขายดี TOP 5 (บาท)</h2>
+          <div className="w-full h-[250px] sm:h-[300px]"> {/* ปรับความสูงสำหรับมือถือ */}
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.topItems} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={stats.topItems} layout="vertical" margin={{ top: 5, right: 10, left: 0, bottom: 5 }}> {/* ปรับ margin สำหรับมือถือ */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" stroke="#94a3b8" /> 
-                <YAxis dataKey="name" type="category" stroke="#94a3b8" />
+                <XAxis type="number" stroke="#94a3b8" tickFormatter={(value) => value.toLocaleString()} tick={{ fontSize: 10 }} /> {/* ปรับขนาดตัวอักษร */}
+                <YAxis dataKey="name" type="category" stroke="#94a3b8" width={60} tick={{ fontSize: 10 }} /> {/* ปรับขนาดตัวอักษร/ความกว้าง */}
                 <Tooltip 
                   formatter={(value: number, name: string) => {
                     if (name === 'revenue') return [`฿${value.toLocaleString()}`, 'รายได้'];
@@ -754,9 +754,9 @@ const RestaurantApp = () => {
                     return [value.toLocaleString(), name];
                   }} 
                   labelFormatter={(label) => `เมนู: ${label}`}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff', fontSize: '12px' }}
                 />
-                <Legend />
+                <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="revenue" fill="#4f46e5" name="รายได้" radius={[0, 4, 4, 0]} /> 
               </BarChart>
             </ResponsiveContainer>
@@ -765,37 +765,37 @@ const RestaurantApp = () => {
       </div>
       
       {/* รายการเมนูขายดี */}
-      <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">เมนูขายดี TOP 5</h2>
+      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100">
+        <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-4">เมนูขายดี TOP 5</h2>
         <div className="space-y-3">
           {stats.topItems.map((item, index) => ( 
-            <div key={item.name} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition duration-150">
-              <div className="flex items-center space-x-4">
-                <span className="bg-teal-500 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">
+            <div key={item.name} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition duration-150">
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-2 sm:mb-0">
+                <span className="bg-teal-500 text-white w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm font-bold">
                   #{index + 1}
                 </span>
-                <span className="font-medium text-slate-800">{item.name}</span>
+                <span className="font-medium text-slate-800 text-sm sm:text-base">{item.name}</span>
               </div>
-              <span className="text-slate-600 font-semibold">{item.quantity} จาน (<span className="text-teal-600">฿{item.revenue.toLocaleString()}</span>)</span> 
+              <span className="text-slate-600 font-semibold text-sm sm:text-base ml-9 sm:ml-0">{item.quantity} จาน (<span className="text-teal-600">฿{item.revenue.toLocaleString()}</span>)</span> 
             </div>
           ))}
         </div>
       </div>
 
       {/* ออเดอร์ล่าสุด */}
-      <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">ออเดอร์ล่าสุด</h2>
+      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100">
+        <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-4">ออเดอร์ล่าสุด</h2>
         {bills.length === 0 ? (
-          <p className="text-slate-500 text-center py-8">ยังไม่มีบิล</p>
+          <p className="text-slate-500 text-center py-6 sm:py-8">ยังไม่มีบิล</p>
         ) : (
           bills.slice(-5).reverse().map(bill => (
-            <div key={bill.id} className="flex justify-between items-center p-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition duration-150">
+            <div key={bill.id} className="flex justify-between items-center p-3 sm:p-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition duration-150">
               <div>
-                <p className="font-medium text-slate-800">บิลที่ #{bill.id}</p>
-                <p className="text-sm text-slate-500">{new Date(bill.date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                <p className="font-medium text-slate-800 text-sm sm:text-base">บิลที่ #{bill.id}</p>
+                <p className="text-xs text-slate-500">{new Date(bill.date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-teal-600">฿{bill.total.toLocaleString()}</p>
+                <p className="font-bold text-teal-600 text-sm sm:text-base">฿{bill.total.toLocaleString()}</p>
                 <p className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block mt-1">{bill.status}</p>
               </div>
             </div>
@@ -806,17 +806,17 @@ const RestaurantApp = () => {
   );
 
   const OrderPage = () => (
-    <div className="p-6 bg-slate-50 min-h-screen">
-      <h1 className="text-3xl font-extrabold text-slate-800 mb-8">🛒 รับออเดอร์</h1>
+    <div className="p-4 sm:p-6 bg-slate-50 min-h-screen"> {/* ปรับ padding สำหรับมือถือ */}
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-6 sm:mb-8">🛒 รับออเดอร์</h1> {/* ปรับขนาดตัวอักษร */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        <div className="space-y-4 sm:space-y-6">
           <h2 className="text-xl font-semibold text-slate-800">รายการเมนู</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> {/* ปรับให้เป็น 1 คอลัมน์ในมือถือเล็ก และ 2 คอลัมน์ในมือถือ/เดสก์ท็อป */}
             {menuItems.map((item: MenuItem) => (
               <div 
                 key={item.id} 
-                className="bg-white p-5 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-all duration-300"
+                className="bg-white p-4 sm:p-5 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-bold text-lg text-slate-800">{item.name}</h3>
@@ -825,25 +825,25 @@ const RestaurantApp = () => {
                 <p className="text-sm text-slate-500 mb-4">{item.category}</p>
                 <button
                   onClick={() => addToOrder(item)}
-                  className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors font-medium shadow-md shadow-teal-500/30"
+                  className="w-full bg-teal-500 text-white py-2 sm:py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors font-medium shadow-md shadow-teal-500/30 text-sm sm:text-base"
                 >
-                  <Plus size={18} className="inline mr-2" /> เพิ่มลงออเดอร์
+                  <Plus size={16} className="inline mr-2" /> เพิ่มลงออเดอร์
                 </button>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 h-fit lg:sticky lg:top-8">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">รายการออเดอร์ปัจจุบัน</h2>
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100 h-fit lg:sticky lg:top-8"> {/* ปรับ padding และ sticky top */}
+          <h2 className="text-xl font-semibold text-slate-800 mb-4 sm:mb-6">รายการออเดอร์ปัจจุบัน</h2>
 
           {currentOrder.length === 0 ? (
-            <p className="text-slate-500 text-center py-12">📝 ยังไม่มีรายการในออเดอร์</p>
+            <p className="text-slate-500 text-center py-8 sm:py-12">📝 ยังไม่มีรายการในออเดอร์</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {currentOrder.map(item => (
-                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <div>
+                <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className='mb-2 sm:mb-0'>
                     <h4 className="font-bold text-slate-800">{item.name}</h4>
                     <p className="text-sm text-slate-500">฿{item.price.toLocaleString()} x <span className="font-bold">{item.quantity}</span></p>
                   </div>
@@ -855,7 +855,7 @@ const RestaurantApp = () => {
                     >
                       <Minus size={16} />
                     </button>
-                    <span className="mx-2 font-bold text-lg text-slate-800 w-6 text-center">{item.quantity}</span>
+                    <span className="mx-1 sm:mx-2 font-bold text-base sm:text-lg text-slate-800 w-5 sm:w-6 text-center">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       aria-label="เพิ่มจำนวน"
@@ -866,7 +866,7 @@ const RestaurantApp = () => {
                     <button
                       onClick={() => removeFromOrder(item.id)}
                       aria-label="ลบรายการ"
-                      className="bg-slate-100 text-red-600 p-2 rounded-full hover:bg-slate-200 ml-3 transition-colors"
+                      className="bg-slate-100 text-red-600 p-2 rounded-full hover:bg-slate-200 ml-2 sm:ml-3 transition-colors"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -874,14 +874,14 @@ const RestaurantApp = () => {
                 </div>
               ))}
 
-              <div className="border-t border-slate-200 pt-6 mt-6">
-                <div className="flex justify-between text-2xl font-extrabold mb-4">
+              <div className="border-t border-slate-200 pt-4 sm:pt-6 mt-4 sm:mt-6">
+                <div className="flex justify-between text-xl sm:text-2xl font-extrabold mb-4">
                   <span className="text-slate-800">ยอดรวม:</span>
                   <span className="text-teal-600">฿{calculateTotal(currentOrder).toLocaleString()}</span>
                 </div>
                 <button
                   onClick={generateBill}
-                  className="w-full bg-teal-500 text-white py-4 px-4 rounded-xl hover:bg-teal-600 transition-colors font-extrabold shadow-lg shadow-teal-500/40"
+                  className="w-full bg-teal-500 text-white py-3 sm:py-4 px-4 rounded-xl hover:bg-teal-600 transition-colors font-extrabold shadow-lg shadow-teal-500/40 text-sm sm:text-base"
                 >
                   <Receipt size={20} className="inline mr-3" /> ออกบิล & ชำระเงิน
                 </button>
@@ -898,21 +898,21 @@ const RestaurantApp = () => {
     const qrCodeUrl = lastBill ? generatePromptPayQR(lastBill.total, shopSettings) : '';
 
     return (
-      <div className="p-6 bg-slate-50 min-h-screen flex justify-center print:p-0 print:bg-white print:min-h-0 print:block">
+      <div className="p-4 sm:p-6 bg-slate-50 min-h-screen flex justify-center print:p-0 print:bg-white print:min-h-0 print:block"> {/* ปรับ padding สำหรับมือถือ */}
         <div 
           id="bill-container" 
-          className="w-full max-w-lg bg-white p-8 rounded-2xl shadow-xl border border-slate-100 print:shadow-none print:border-0 print:rounded-none print:max-w-full"
+          className="w-full max-w-sm sm:max-w-lg bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-100 print:shadow-none print:border-0 print:rounded-none print:max-w-full"
         >
-          <div className="text-center mb-6">
-            <Receipt size={36} className="text-teal-500 mx-auto mb-3 print:text-slate-800" />
-            <h1 className="text-3xl font-extrabold text-slate-800">{shopSettings.shopName || 'ใบเสร็จรับเงิน'}</h1>
+          <div className="text-center mb-4 sm:mb-6">
+            <Receipt size={30} className="text-teal-500 mx-auto mb-2 sm:mb-3 print:text-slate-800" /> {/* ปรับขนาด Icon */}
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{shopSettings.shopName || 'ใบเสร็จรับเงิน'}</h1> {/* ปรับขนาดตัวอักษร */}
             <p className="text-sm text-slate-500">บิลล่าสุด: #{lastBill?.id}</p>
-            <p className="text-sm text-slate-500">{new Date().toLocaleString('th-TH')}</p>
+            <p className="text-xs text-slate-500">{new Date().toLocaleString('th-TH')}</p> {/* ปรับขนาดตัวอักษร */}
           </div>
 
           {lastBill ? (
             <>
-              <div className="space-y-3 mb-6 border-t border-b border-slate-200 py-4">
+              <div className="space-y-3 mb-4 sm:mb-6 border-t border-b border-slate-200 py-3 sm:py-4 text-sm sm:text-base"> {/* ปรับขนาดตัวอักษร/padding */}
                 {lastBill.items.map(item => (
                   <div key={item.id} className="flex justify-between text-slate-700">
                     <span>{item.name} x {item.quantity}</span>
@@ -921,7 +921,7 @@ const RestaurantApp = () => {
                 ))}
               </div>
 
-              <div className="flex justify-between text-2xl font-extrabold text-slate-800 mb-6 border-b border-slate-200 pb-4">
+              <div className="flex justify-between text-xl sm:text-2xl font-extrabold text-slate-800 mb-4 sm:mb-6 border-b border-slate-200 pb-3 sm:pb-4"> {/* ปรับขนาดตัวอักษร/padding */}
                 <span>ยอดรวมสุทธิ:</span>
                 <span className="text-teal-600">฿{lastBill.total.toLocaleString()}</span>
               </div>
@@ -929,10 +929,10 @@ const RestaurantApp = () => {
               {/* ส่วน PromptPay QR Code */}
               {shopSettings.promptPayId && (
                 <div className="text-center bg-teal-50 p-4 rounded-xl border border-teal-200 print:bg-white print:border-0">
-                  <h3 className="text-xl font-bold text-teal-700 mb-3 print:text-slate-800">ชำระเงินด้วย PromptPay</h3>
-                  <img src={qrCodeUrl} alt="PromptPay QR Code" className="w-48 h-48 mx-auto rounded-lg shadow-lg border border-white" />
-                  <p className="mt-3 font-semibold text-slate-800">ยอด: <span className="text-teal-600">฿{lastBill.total.toLocaleString()}</span></p>
-                  <p className="text-sm text-slate-600 mt-1">บัญชี: {shopSettings.promptPayName}</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-teal-700 mb-3 print:text-slate-800">ชำระเงินด้วย PromptPay</h3> {/* ปรับขนาดตัวอักษร */}
+                  <img src={qrCodeUrl} alt="PromptPay QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mx-auto rounded-lg shadow-lg border border-white" /> {/* ปรับขนาด QR */}
+                  <p className="mt-3 font-semibold text-slate-800 text-sm sm:text-base">ยอด: <span className="text-teal-600">฿{lastBill.total.toLocaleString()}</span></p>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1">บัญชี: {shopSettings.promptPayName}</p>
                   <p className="text-xs text-slate-500">เลข PromptPay: {shopSettings.promptPayId}</p>
                 </div>
               )}
@@ -940,20 +940,20 @@ const RestaurantApp = () => {
               {/* 📌 ปุ่มพิมพ์บิลใหม่ */}
               <button
                 onClick={handlePrintBill}
-                className="w-full bg-sky-500 text-white py-3 px-4 rounded-xl hover:bg-sky-600 transition-colors font-medium mt-6 print:hidden" // ซ่อนเมื่อสั่งพิมพ์
+                className="w-full bg-sky-500 text-white py-3 px-4 rounded-xl hover:bg-sky-600 transition-colors font-medium mt-4 sm:mt-6 print:hidden text-sm sm:text-base" // ซ่อนเมื่อสั่งพิมพ์
               >
                 <Printer size={18} className="inline mr-2" /> พิมพ์บิล
               </button>
               
               <button
                 onClick={() => setCurrentPage('order')}
-                className="w-full bg-slate-200 text-slate-700 py-3 px-4 rounded-xl hover:bg-slate-300 transition-colors font-medium mt-3 print:hidden" // ซ่อนเมื่อสั่งพิมพ์
+                className="w-full bg-slate-200 text-slate-700 py-3 px-4 rounded-xl hover:bg-slate-300 transition-colors font-medium mt-3 print:hidden text-sm sm:text-base" // ซ่อนเมื่อสั่งพิมพ์
               >
                 <Home size={18} className="inline mr-2" /> กลับไปรับออเดอร์ใหม่
               </button>
             </>
           ) : (
-            <p className="text-center text-slate-500 py-10">ยังไม่มีบิลล่าสุด</p>
+            <p className="text-center text-slate-500 py-8 sm:py-10">ยังไม่มีบิลล่าสุด</p>
           )}
         </div>
       </div>
@@ -974,35 +974,34 @@ const RestaurantApp = () => {
     return (
       <nav className="bg-white shadow-xl sticky top-0 z-10 border-b border-slate-200 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16"> {/* ปรับความสูง */}
             <div className="flex items-center">
-              <span className="text-2xl font-extrabold text-teal-600 flex items-center">
-                <MenuIcon size={24} className="mr-2" />
+              <span className="text-xl sm:text-2xl font-extrabold text-teal-600 flex items-center"> {/* ปรับขนาดตัวอักษร */}
+                <MenuIcon size={20} className="mr-1 sm:mr-2" /> {/* ปรับขนาด Icon */}
                 {shopSettings.shopName || 'POS App'}
               </span>
             </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                {navItems.map((item) => {
-                  const isActive = currentPage === item.page;
-                  return (
-                    <button
-                      key={item.name}
-                      onClick={() => setCurrentPage(item.page)}
-                      // ปรับสไตล์ Navigation Item
-                      className={`
-                        ${isActive 
-                          ? 'bg-teal-500 text-white shadow-md shadow-teal-500/40' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}
-                        px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center
-                      `}
-                    >
-                      <item.icon size={18} className="mr-2" />
-                      {item.name}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex items-center space-x-2 sm:space-x-4"> {/* ปรับพื้นที่ปุ่ม */}
+              {navItems.map((item) => {
+                const isActive = currentPage === item.page;
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => setCurrentPage(item.page)}
+                    // ปรับสไตล์ Navigation Item
+                    className={`
+                      ${isActive 
+                        ? 'bg-teal-500 text-white shadow-md shadow-teal-500/40' 
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}
+                      px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 flex items-center
+                    `}
+                  >
+                    <item.icon size={16} className="mr-1 sm:mr-2" /> {/* ปรับขนาด Icon */}
+                    <span className='hidden sm:inline'>{item.name}</span>
+                    <span className='inline sm:hidden'>{item.name.substring(0,2)}{item.name.length > 2 ? '..' : ''}</span> {/* แสดงตัวย่อในมือถือ */}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
