@@ -805,98 +805,149 @@ const RestaurantApp = () => {
     </div>
   );
 
-  const OrderPage = () => (
-    <div className="p-4 sm:p-6 bg-slate-50 min-h-screen"> {/* ปรับ padding สำหรับมือถือ */}
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-6 sm:mb-8">🛒 รับออเดอร์</h1> {/* ปรับขนาดตัวอักษร */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-        <div className="space-y-4 sm:space-y-6">
-          <h2 className="text-xl font-semibold text-slate-800">รายการเมนู</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> {/* ปรับให้เป็น 1 คอลัมน์ในมือถือเล็ก และ 2 คอลัมน์ในมือถือ/เดสก์ท็อป */}
-            {menuItems.map((item: MenuItem) => (
-              <div 
-                key={item.id} 
-                className="bg-white p-4 sm:p-5 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-all duration-300"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-lg text-slate-800">{item.name}</h3>
-                  <span className="text-teal-600 font-extrabold text-xl">฿{item.price}</span>
-                </div>
-                <p className="text-sm text-slate-500 mb-4">{item.category}</p>
-                <button
-                  onClick={() => addToOrder(item)}
-                  className="w-full bg-teal-500 text-white py-2 sm:py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors font-medium shadow-md shadow-teal-500/30 text-sm sm:text-base"
-                >
-                  <Plus size={16} className="inline mr-2" /> เพิ่มลงออเดอร์
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100 h-fit lg:sticky lg:top-8"> {/* ปรับ padding และ sticky top */}
-          <h2 className="text-xl font-semibold text-slate-800 mb-4 sm:mb-6">รายการออเดอร์ปัจจุบัน</h2>
-
-          {currentOrder.length === 0 ? (
-            <p className="text-slate-500 text-center py-8 sm:py-12">📝 ยังไม่มีรายการในออเดอร์</p>
-          ) : (
-            <div className="space-y-3 sm:space-y-4">
-              {currentOrder.map(item => (
-                <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className='mb-2 sm:mb-0'>
-                    <h4 className="font-bold text-slate-800">{item.name}</h4>
-                    <p className="text-sm text-slate-500">฿{item.price.toLocaleString()} x <span className="font-bold">{item.quantity}</span></p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      aria-label="ลดจำนวน"
-                      className="bg-red-100 text-red-600 p-2 rounded-full hover:bg-red-200 transition-colors"
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="mx-1 sm:mx-2 font-bold text-base sm:text-lg text-slate-800 w-5 sm:w-6 text-center">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      aria-label="เพิ่มจำนวน"
-                      className="bg-teal-100 text-teal-600 p-2 rounded-full hover:bg-teal-200 transition-colors"
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <button
-                      onClick={() => removeFromOrder(item.id)}
-                      aria-label="ลบรายการ"
-                      className="bg-slate-100 text-red-600 p-2 rounded-full hover:bg-slate-200 ml-2 sm:ml-3 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              <div className="border-t border-slate-200 pt-4 sm:pt-6 mt-4 sm:mt-6">
-                <div className="flex justify-between text-xl sm:text-2xl font-extrabold mb-4">
-                  <span className="text-slate-800">ยอดรวม:</span>
-                  <span className="text-teal-600">฿{calculateTotal(currentOrder).toLocaleString()}</span>
-                </div>
-                <button
-                  onClick={generateBill}
-                  className="w-full bg-teal-500 text-white py-3 sm:py-4 px-4 rounded-xl hover:bg-teal-600 transition-colors font-extrabold shadow-lg shadow-teal-500/40 text-sm sm:text-base"
-                >
-                  <Receipt size={20} className="inline mr-3" /> ออกบิล & ชำระเงิน
-                </button>
-              </div>
+  const OrderPage = () => {
+    const total = calculateTotal(currentOrder);
+    
+    // 📌 Fixed Footer สำหรับมือถือใน OrderPage
+    const MobileCheckoutFooter = () => (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white p-4 shadow-2xl border-t border-slate-200 z-50"> 
+            <div className="flex justify-between text-lg font-extrabold mb-3">
+                <span className="text-slate-800">ยอดรวม:</span>
+                <span className="text-teal-600">฿{total.toLocaleString()}</span>
             </div>
-          )}
+            <button
+                onClick={generateBill}
+                disabled={currentOrder.length === 0}
+                className={`w-full py-3 px-4 rounded-xl font-extrabold shadow-lg transition-colors text-base ${
+                    currentOrder.length > 0 
+                    ? 'bg-teal-500 text-white hover:bg-teal-600 shadow-teal-500/40' 
+                    : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                }`}
+            >
+                <Receipt size={20} className="inline mr-3" /> ออกบิล & ชำระเงิน
+            </button>
         </div>
-      </div>
-    </div>
-  );
+    );
+    
+    return (
+        <div className="p-4 sm:p-6 bg-slate-50 min-h-screen"> 
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-6 sm:mb-8">🛒 รับออเดอร์</h1> 
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                {/* รายการเมนู: เลื่อนได้ปกติ */}
+                <div className="space-y-4 sm:space-y-6">
+                    <h2 className="text-xl font-semibold text-slate-800">รายการเมนู</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
+                        {menuItems.map((item: MenuItem) => (
+                            <div 
+                                key={item.id} 
+                                className="bg-white p-4 sm:p-5 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-all duration-300"
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <h3 className="font-bold text-lg text-slate-800">{item.name}</h3>
+                                    <span className="text-teal-600 font-extrabold text-xl">฿{item.price}</span>
+                                </div>
+                                <p className="text-sm text-slate-500 mb-4">{item.category}</p>
+                                <button
+                                    onClick={() => addToOrder(item)}
+                                    className="w-full bg-teal-500 text-white py-2 sm:py-3 px-4 rounded-lg hover:bg-teal-600 transition-colors font-medium shadow-md shadow-teal-500/30 text-sm sm:text-base"
+                                >
+                                    <Plus size={16} className="inline mr-2" /> เพิ่มลงออเดอร์
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    {/* 📌 เพิ่มพื้นที่เว้นว่างด้านล่างเพื่อให้รายการเมนูเลื่อนขึ้นมาเหนือก Fixed Footer ในมือถือ */}
+                    {currentOrder.length > 0 && <div className="lg:hidden h-24 sm:h-32"></div>}
+                </div>
+
+                {/* รายการออเดอร์ปัจจุบัน: Sticky ใน Desktop, Normal ใน Mobile */}
+                <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-100 h-fit lg:sticky lg:top-8"> 
+                    <h2 className="text-xl font-semibold text-slate-800 mb-4 sm:mb-6">รายการออเดอร์ปัจจุบัน</h2>
+
+                    {currentOrder.length === 0 ? (
+                        <p className="text-slate-500 text-center py-8 sm:py-12">📝 ยังไม่มีรายการในออเดอร์</p>
+                    ) : (
+                        <div className="space-y-3 sm:space-y-4">
+                            {currentOrder.map(item => (
+                                <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className='mb-2 sm:mb-0'>
+                                        <h4 className="font-bold text-slate-800">{item.name}</h4>
+                                        <p className="text-sm text-slate-500">฿{item.price.toLocaleString()} x <span className="font-bold">{item.quantity}</span></p>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                            aria-label="ลดจำนวน"
+                                            className="bg-red-100 text-red-600 p-2 rounded-full hover:bg-red-200 transition-colors"
+                                        >
+                                            <Minus size={16} />
+                                        </button>
+                                        <span className="mx-1 sm:mx-2 font-bold text-base sm:text-lg text-slate-800 w-5 sm:w-6 text-center">{item.quantity}</span>
+                                        <button
+                                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                            aria-label="เพิ่มจำนวน"
+                                            className="bg-teal-100 text-teal-600 p-2 rounded-full hover:bg-teal-200 transition-colors"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => removeFromOrder(item.id)}
+                                            aria-label="ลบรายการ"
+                                            className="bg-slate-100 text-red-600 p-2 rounded-full hover:bg-slate-200 ml-2 sm:ml-3 transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* 📌 ซ่อนส่วนยอดรวมและปุ่มออกบิลในมือถือ เพราะย้ายไปที่ MobileCheckoutFooter แล้ว */}
+                            <div className="hidden lg:block border-t border-slate-200 pt-4 sm:pt-6 mt-4 sm:mt-6"> 
+                                <div className="flex justify-between text-xl sm:text-2xl font-extrabold mb-4">
+                                    <span className="text-slate-800">ยอดรวม:</span>
+                                    <span className="text-teal-600">฿{total.toLocaleString()}</span>
+                                </div>
+                                <button
+                                    onClick={generateBill}
+                                    className="w-full bg-teal-500 text-white py-3 sm:py-4 px-4 rounded-xl hover:bg-teal-600 transition-colors font-extrabold shadow-lg shadow-teal-500/40 text-sm sm:text-base"
+                                >
+                                    <Receipt size={20} className="inline mr-3" /> ออกบิล & ชำระเงิน
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            {/* 📌 แสดง Fixed Footer ในหน้าจอมือถือ */}
+            {currentOrder.length > 0 && <MobileCheckoutFooter />} 
+        </div>
+    );
+  };
 
   const BillPage = () => {
     const lastBill = bills.length > 0 ? bills[bills.length - 1] : null;
     const qrCodeUrl = lastBill ? generatePromptPayQR(lastBill.total, shopSettings) : '';
 
+    // 📌 Fixed Footer สำหรับมือถือใน BillPage
+    const MobileBillFooter = () => (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white p-4 shadow-2xl border-t border-slate-200 z-50 print:hidden">
+            <button
+                onClick={handlePrintBill}
+                className="w-full bg-sky-500 text-white py-3 px-4 rounded-xl hover:bg-sky-600 transition-colors font-medium mb-3 text-sm sm:text-base"
+            >
+                <Printer size={18} className="inline mr-2" /> พิมพ์บิล
+            </button>
+            <button
+                onClick={() => setCurrentPage('order')}
+                className="w-full bg-slate-200 text-slate-700 py-3 px-4 rounded-xl hover:bg-slate-300 transition-colors font-medium text-sm sm:text-base"
+            >
+                <Home size={18} className="inline mr-2" /> กลับไปรับออเดอร์ใหม่
+            </button>
+        </div>
+    );
+    
     return (
       <div className="p-4 sm:p-6 bg-slate-50 min-h-screen flex justify-center print:p-0 print:bg-white print:min-h-0 print:block"> {/* ปรับ padding สำหรับมือถือ */}
         <div 
@@ -937,25 +988,31 @@ const RestaurantApp = () => {
                 </div>
               )}
               
-              {/* 📌 ปุ่มพิมพ์บิลใหม่ */}
+              {/* 📌 ซ่อนปุ่มเหล่านี้ในหน้าจอมือถือ */}
               <button
                 onClick={handlePrintBill}
-                className="w-full bg-sky-500 text-white py-3 px-4 rounded-xl hover:bg-sky-600 transition-colors font-medium mt-4 sm:mt-6 print:hidden text-sm sm:text-base" // ซ่อนเมื่อสั่งพิมพ์
+                className="w-full bg-sky-500 text-white py-3 px-4 rounded-xl hover:bg-sky-600 transition-colors font-medium mt-4 sm:mt-6 print:hidden text-sm sm:text-base hidden lg:block" // ซ่อนในมือถือ
               >
                 <Printer size={18} className="inline mr-2" /> พิมพ์บิล
               </button>
               
               <button
                 onClick={() => setCurrentPage('order')}
-                className="w-full bg-slate-200 text-slate-700 py-3 px-4 rounded-xl hover:bg-slate-300 transition-colors font-medium mt-3 print:hidden text-sm sm:text-base" // ซ่อนเมื่อสั่งพิมพ์
+                className="w-full bg-slate-200 text-slate-700 py-3 px-4 rounded-xl hover:bg-slate-300 transition-colors font-medium mt-3 print:hidden text-sm sm:text-base hidden lg:block" // ซ่อนในมือถือ
               >
                 <Home size={18} className="inline mr-2" /> กลับไปรับออเดอร์ใหม่
               </button>
+              
+              {/* 📌 เพิ่มพื้นที่เว้นว่างที่ด้านล่างของบิลสำหรับ Fixed Footer ในมือถือ */}
+              <div className="lg:hidden h-32 sm:h-40"></div> 
             </>
           ) : (
             <p className="text-center text-slate-500 py-8 sm:py-10">ยังไม่มีบิลล่าสุด</p>
           )}
         </div>
+        
+        {/* 📌 แสดง Fixed Footer ในหน้าจอมือถือ */}
+        {lastBill && <MobileBillFooter />}
       </div>
     );
   };
